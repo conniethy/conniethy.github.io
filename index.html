@@ -104,6 +104,19 @@
             background-color: #e8f4fc;
             border-radius: 4px;
         }
+        .reset-options {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .reset-type {
+            margin: 10px 0;
+        }
+        .danger-zone {
+            border-left: 4px solid #e74c3c;
+            padding-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +158,24 @@
             <button onclick="showAdminData()">View All Submissions</button>
             <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
             <button onclick="resetDistribution()" class="reset-btn">🔄 Reset to Submission Phase</button>
+		<button onclick="showResetOptions()" class="reset-btn">🔄 Reset System</button>
+
+        	<!-- Reset options panel (hidden by default) -->
+		<div id="resetOptions" class="reset-options hidden">
+            <div class="reset-type">
+                <h4>Soft Reset:</h4>
+                <p>Only clears current gift distribution (keeps all accounts and submissions)</p>
+                <button onclick="performReset('soft')">Reset Distribution Only</button>
+            </div>
+            
+            <div class="reset-type danger-zone">
+                <h4>Hard Reset:</h4>
+                <p>⚠️ Deletes ALL data (accounts, submissions, and distribution)</p>
+                <button onclick="confirmHardReset()" style="background-color: #e74c3c;">Delete All Records</button>
+            </div>
+            
+            <button onclick="hideResetOptions()" style="margin-top: 10px;">Cancel</button>
+        </div>
             <div id="adminData"></div>
         </div>
         
@@ -167,6 +198,57 @@
     </div>
 
     <script>
+        function showResetOptions() {
+            document.getElementById('resetOptions').classList.remove('hidden');
+        }
+        
+        // Hide reset options panel
+        function hideResetOptions() {
+            document.getElementById('resetOptions').classList.add('hidden');
+        }
+        
+        // Confirm hard reset
+        function confirmHardReset() {
+            if (confirm('⚠️ DANGER: This will PERMANENTLY delete:\n\n' +
+                       '- All gift submissions\n' +
+                       '- All account passwords\n' +
+                       '- Current distribution\n\n' +
+                       'This cannot be undone!')) {
+                performReset('hard');
+            }
+        }
+        
+        // Perform the actual reset
+        function performReset(type) {
+            if (type === 'hard') {
+                // Clear ALL data
+                localStorage.removeItem('anonymousSubmissions');
+                localStorage.removeItem('credentialsDB');
+                localStorage.removeItem('distributionResults');
+                localStorage.removeItem('showRawFor');
+                
+                // Reset in-memory data
+                submissions = [];
+                credentialsDB = {};
+                distributionResults = null;
+                showRawFor = {};
+            } else {
+                // Soft reset - only clear distribution
+                localStorage.removeItem('distributionResults');
+                distributionResults = null;
+            }
+            
+            // Update UI
+            hideResetOptions();
+            checkAdmin();
+            updatePhaseIndicator();
+            showAdminData();
+            
+            // Show confirmation
+            alert(type === 'hard' 
+                ? 'All data has been deleted' 
+                : 'Gift distribution has been reset');
+        }
         // Store all submissions (anonymous)
         let submissions = JSON.parse(localStorage.getItem('anonymousSubmissions')) || [];
         // Store name+password combinations
