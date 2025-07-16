@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Submission App</title>
+    <title>List-Based Submission</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        input, button {
+        select, input, button {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -63,8 +63,24 @@
         
         <div id="userForm">
             <div class="form-group">
-                <label>Your Name:</label>
-                <input type="text" id="userName" required>
+                <label>Select Your Name:</label>
+                <select id="userName" required>
+                    <option value="">-- Select your name --</option>
+                    <option value="Connie">Connie</option>
+                    <option value="Sharon">Sharon</option>
+                    <option value="Wilson">Wilson</option>
+                    <option value="Miu">Miu</option>
+                    <option value="ChuSum">ChuSum</option>
+                    <option value="LCH">LCH</option>
+                    <option value="Adrian">Adrian</option>
+                    <option value="KA">KA</option>
+                    <option value="Chick">Chick</option>
+                    <option value="Nataile">Nataile</option>
+                    <option value="TMH">TMH</option>
+                    <option value="會長">會長</option>
+                    <option value="Ken">Ken</option>
+                    <option value="Pete">Pete</option>
+                </select>
             </div>
             
             <div class="form-group">
@@ -80,20 +96,45 @@
             <h2>Admin View</h2>
             <button onclick="showAdminData()">View All Submissions</button>
             <div id="adminData"></div>
+            
+            <div style="margin-top: 20px;">
+                <h3>Add New Name to List</h3>
+                <input type="text" id="newName" placeholder="Enter new name">
+                <button onclick="addNewName()">Add Name</button>
+            </div>
         </div>
     </div>
 
     <script>
         // Store all submissions
-        let submissions = JSON.parse(localStorage.getItem('simpleSubmissions')) || [];
+        let submissions = JSON.parse(localStorage.getItem('listSubmissions')) || [];
+        // Store the list of names
+        let nameList = JSON.parse(localStorage.getItem('nameList')) || 
+                      ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH','Adrian','KA','Chick','Nataile','TMH','會長','Ken','Pete'];
+        
+        // Initialize the name dropdown
+        function initNameList() {
+            const select = document.getElementById('userName');
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            // Add names from nameList
+            nameList.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+        }
         
         // Submit form
         function submitForm() {
-            const name = document.getElementById('userName').value.trim();
+            const name = document.getElementById('userName').value;
             const value = document.getElementById('userValue').value.trim();
             
             if (!name || !value) {
-                alert('Please fill both fields!');
+                alert('Please select your name and enter a value!');
                 return;
             }
             
@@ -105,13 +146,12 @@
             });
             
             // Save to localStorage
-            localStorage.setItem('simpleSubmissions', JSON.stringify(submissions));
+            localStorage.setItem('listSubmissions', JSON.stringify(submissions));
             
             // Show success
             document.getElementById('successMessage').classList.remove('hidden');
             
-            // Clear form
-            document.getElementById('userName').value = '';
+            // Clear form (keep name selected)
             document.getElementById('userValue').value = '';
             
             // Hide success after 3 seconds
@@ -161,8 +201,39 @@
             `;
         }
         
-        // Check for admin on load
-        checkAdmin();
+        // Add new name to the list
+        function addNewName() {
+            const newNameInput = document.getElementById('newName');
+            const newName = newNameInput.value.trim();
+            
+            if (!newName) {
+                alert('Please enter a name!');
+                return;
+            }
+            
+            if (nameList.includes(newName)) {
+                alert('This name already exists!');
+                return;
+            }
+            
+            // Add to nameList
+            nameList.push(newName);
+            localStorage.setItem('nameList', JSON.stringify(nameList));
+            
+            // Update dropdown
+            initNameList();
+            
+            // Clear input
+            newNameInput.value = '';
+            
+            alert(`"${newName}" added to the list!`);
+        }
+        
+        // Initialize on load
+        window.onload = function() {
+            initNameList();
+            checkAdmin();
+        };
     </script>
 </body>
 </html>
