@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List-Based Submission</title>
+    <title>List Submission with Distribution</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,37 +55,42 @@
             color: green;
             text-align: center;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .distribute-btn {
+            background-color: #27ae60;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Submission Form</h1>
+        <h1>Secret Santa</h1>
         
         <div id="userForm">
             <div class="form-group">
                 <label>Select Your Name:</label>
                 <select id="userName" required>
                     <option value="">-- Select your name --</option>
-                    <option value="Connie">Connie</option>
-                    <option value="Sharon">Sharon</option>
-                    <option value="Wilson">Wilson</option>
-                    <option value="Miu">Miu</option>
-                    <option value="ChuSum">ChuSum</option>
-                    <option value="LCH">LCH</option>
-                    <option value="Adrian">Adrian</option>
-                    <option value="KA">KA</option>
-                    <option value="Chick">Chick</option>
-                    <option value="Nataile">Nataile</option>
-                    <option value="TMH">TMH</option>
-                    <option value="會長">會長</option>
-                    <option value="Ken">Ken</option>
-                    <option value="Pete">Pete</option>
+                    <!-- Names will be loaded from storage -->
                 </select>
             </div>
             
             <div class="form-group">
-                <label>Your Value:</label>
-                <input type="text" id="userValue" required>
+                <label>Key Word :</label>
+                <input type="text" id="userValue" required placeholder="">
             </div>
             
             <button onclick="submitForm()">Submit</button>
@@ -95,10 +100,12 @@
         <div id="adminSection" class="admin hidden">
             <h2>Admin View</h2>
             <button onclick="showAdminData()">View All Submissions</button>
+            <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
             <div id="adminData"></div>
+            <div id="distributionResults" class="hidden"></div>
             
             <div style="margin-top: 20px;">
-                <h3>Add New Name to List</h3>
+                <h3>Manage Name List</h3>
                 <input type="text" id="newName" placeholder="Enter new name">
                 <button onclick="addNewName()">Add Name</button>
             </div>
@@ -108,9 +115,9 @@
     <script>
         // Store all submissions
         let submissions = JSON.parse(localStorage.getItem('listSubmissions')) || [];
-        // Store the list of names
+        // Store the list of names (updated with your specified names)
         let nameList = JSON.parse(localStorage.getItem('nameList')) || 
-                      ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH','Adrian','KA','Chick','Nataile','TMH','會長','Ken','Pete'];
+                      ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
         
         // Initialize the name dropdown
         function initNameList() {
@@ -134,7 +141,7 @@
             const value = document.getElementById('userValue').value.trim();
             
             if (!name || !value) {
-                alert('Please select your name and enter a value!');
+                alert('Please select your name and enter a gift suggestion!');
                 return;
             }
             
@@ -182,19 +189,19 @@
             
             // Create a table for better display
             adminData.innerHTML += `
-                <table style="width:100%; border-collapse: collapse;">
-                    <tr style="background-color: #3498db; color: white;">
-                        <th style="padding: 8px; text-align: left;">No.</th>
-                        <th style="padding: 8px; text-align: left;">Name</th>
-                        <th style="padding: 8px; text-align: left;">Value</th>
-                        <th style="padding: 8px; text-align: left;">Time</th>
+                <table>
+                    <tr>
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Gift Suggestion</th>
+                        <th>Time</th>
                     </tr>
                     ${submissions.map((sub, index) => `
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px;">${index + 1}</td>
-                            <td style="padding: 8px;">${sub.name}</td>
-                            <td style="padding: 8px;">${sub.value}</td>
-                            <td style="padding: 8px;">${new Date(sub.timestamp).toLocaleString()}</td>
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${sub.name}</td>
+                            <td>${sub.value}</td>
+                            <td>${new Date(sub.timestamp).toLocaleString()}</td>
                         </tr>
                     `).join('')}
                 </table>
@@ -227,6 +234,75 @@
             newNameInput.value = '';
             
             alert(`"${newName}" added to the list!`);
+        }
+        
+        // Randomly distribute values to names
+        function distributeValues() {
+            if (submissions.length === 0) {
+                alert('No submissions to distribute!');
+                return;
+            }
+            
+            if (nameList.length === 0) {
+                alert('No names in the list!');
+                return;
+            }
+            
+            // Get only the latest submission per person
+            const latestSubmissions = {};
+            submissions.forEach(sub => {
+                latestSubmissions[sub.name] = sub.value;
+            });
+            
+            const valuesToDistribute = Object.values(latestSubmissions);
+            const recipients = [...nameList];
+            
+            // Remove people who already submitted from recipients
+            Object.keys(latestSubmissions).forEach(name => {
+                const index = recipients.indexOf(name);
+                if (index > -1) {
+                    recipients.splice(index, 1);
+                }
+            });
+            
+            // Shuffle the values
+            const shuffledValues = [...valuesToDistribute].sort(() => 0.5 - Math.random());
+            
+            // Create distribution (each recipient gets one random gift)
+            const distribution = {};
+            recipients.forEach((recipient, index) => {
+                if (index < shuffledValues.length) {
+                    distribution[recipient] = [shuffledValues[index]];
+                }
+            });
+            
+            // Display results
+            const resultsDiv = document.getElementById('distributionResults');
+            resultsDiv.innerHTML = '<h3>🎅 Secret Santa Assignments 🎅</h3>';
+            
+            if (Object.keys(distribution).length === 0) {
+                resultsDiv.innerHTML += '<p>Everyone has submitted, but no one left to distribute to!</p>';
+            } else {
+                resultsDiv.innerHTML += `
+                    <table>
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Gift Idea</th>
+                        </tr>
+                        ${Object.entries(distribution).map(([name, values]) => `
+                            <tr>
+                                <td>${name}</td>
+                                <td>${values.join(', ')}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    <p style="margin-top: 15px; font-style: italic;">
+                        Note: Each person receives one gift suggestion from the submitted list.
+                    </p>
+                `;
+            }
+            
+            resultsDiv.classList.remove('hidden');
         }
         
         // Initialize on load
