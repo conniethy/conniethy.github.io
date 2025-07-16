@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Santa</title>
+    <title>Secret Santa with Password Access</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,221 +73,348 @@
             background-color: #27ae60;
             margin-bottom: 20px;
         }
+        .view-btn {
+            background-color: #e67e22;
+        }
         .anonymous {
             font-style: italic;
             color: #777;
+        }
+        .password-view {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #e8f4fc;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Secret Santa</h1>
-        
-        <div id="userForm">
-            <div class="form-group">
-                <label>Select Your Name:</label>
-                <select id="userName" required>
-                    <option value="">-- Select your name --</option>
-                    <!-- Names will be loaded from storage -->
-                </select>
+        <div id="mainApp">
+            <h1>Secret Santa</h1>
+            
+            <div id="userForm">
+                <div class="form-group">
+                    <label>Select Your Name:</label>
+                    <select id="userName" required>
+                        <option value="">-- Select your name --</option>
+                        <!-- Names will be loaded from storage -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Your Gift KeyWord:</label>
+                    <input type="text" id="userValue" required placeholder="">
+                </div>
+                
+                <button onclick="submitForm()">Submit</button>
+                <p id="successMessage" class="hidden success">Submitted successfully!</p>
             </div>
             
-            <div class="form-group">
-                <label>Key Word of your gift:</label>
-                <input type="text" id="userValue" required placeholder="">
+            <div id="adminSection" class="admin hidden">
+                <h2>Admin View</h2>
+                <button onclick="showAdminData()">View All Submissions</button>
+                <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
+                <div id="adminData"></div>
+                <div id="distributionResults" class="hidden"></div>
             </div>
             
-            <button onclick="submitForm()">Submit</button>
-            <p id="successMessage" class="hidden success">Submitted successfully!</p>
-        </div>
-        
-        <div id="adminSection" class="admin hidden">
-            <h2>Admin View</h2>
-            <button onclick="showAdminData()">View All Submissions</button>
-            <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
-            <div id="adminData"></div>
-            <div id="distributionResults" class="hidden"></div>
+            <div id="passwordSection" class="password-view hidden">
+                <h2>View Your Assignment</h2>
+                <div class="form-group">
+                    <label>Enter Your Unique Password:</label>
+                    <input type="password" id="userPassword" required placeholder="Your secret password">
+                </div>
+                <button onclick="viewAssignment()" class="view-btn">View My Gift</button>
+                <div id="assignmentResult" style="margin-top: 20px;"></div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Store all submissions
-        let submissions = JSON.parse(localStorage.getItem('listSubmissions')) || [];
-        // Store the list of names (updated with your specified names)
-        let nameList = JSON.parse(localStorage.getItem('nameList')) || 
-                      ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
+<script>
+    // Store all submissions
+    let submissions = JSON.parse(localStorage.getItem('listSubmissions')) || [];
+    // Store the list of names
+    let nameList = JSON.parse(localStorage.getItem('nameList')) || 
+                  ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
+    // Store distribution results
+    let distributionResults = JSON.parse(localStorage.getItem('distributionResults')) || null;
+    // Store password assignments
+    let passwordAssignments = JSON.parse(localStorage.getItem('passwordAssignments')) || {};
+    
+    // Generate a random password
+    function generatePassword() {
+        return Math.random().toString(36).substring(2, 10);
+    }
+    
+    // Initialize the name dropdown
+    function initNameList() {
+        const select = document.getElementById('userName');
+        // Clear existing options except the first one
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+        // Add names from nameList
+        nameList.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+    }
+    
+    // Submit form
+    function submitForm() {
+        const name = document.getElementById('userName').value;
+        const value = document.getElementById('userValue').value.trim();
         
-        // Initialize the name dropdown
-        function initNameList() {
-            const select = document.getElementById('userName');
-            // Clear existing options except the first one
-            while (select.options.length > 1) {
-                select.remove(1);
-            }
-            // Add names from nameList
-            nameList.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                select.appendChild(option);
-            });
+        if (!name || !value) {
+            alert('Please select your name and enter a gift suggestion!');
+            return;
         }
         
-        // Submit form
-        function submitForm() {
-            const name = document.getElementById('userName').value;
-            const value = document.getElementById('userValue').value.trim();
-            
-            if (!name || !value) {
-                alert('Please select your name and enter a gift suggestion!');
-                return;
-            }
-            
-            // Add to submissions
+        // Check if this name already submitted
+        const existingIndex = submissions.findIndex(sub => sub.name === name);
+        if (existingIndex > -1) {
+            // Update existing submission
+            submissions[existingIndex] = {
+                name: name,
+                value: value,
+                timestamp: new Date().toISOString()
+            };
+        } else {
+            // Add new submission
             submissions.push({
                 name: name,
                 value: value,
                 timestamp: new Date().toISOString()
             });
-            
-            // Save to localStorage
-            localStorage.setItem('listSubmissions', JSON.stringify(submissions));
-            
-            // Show success
-            document.getElementById('successMessage').classList.remove('hidden');
-            
-            // Clear form (keep name selected)
-            document.getElementById('userValue').value = '';
-            
-            // Hide success after 3 seconds
-            setTimeout(() => {
-                document.getElementById('successMessage').classList.add('hidden');
-            }, 3000);
-            
-            // Show admin section if password is set
-            checkAdmin();
         }
         
-        // Admin functions
-        function checkAdmin() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true') {
-                document.getElementById('adminSection').classList.remove('hidden');
+        // Save to localStorage
+        localStorage.setItem('listSubmissions', JSON.stringify(submissions));
+        
+        // Show success
+        document.getElementById('successMessage').classList.remove('hidden');
+        
+        // Clear form (keep name selected)
+        document.getElementById('userValue').value = '';
+        
+        // Hide success after 3 seconds
+        setTimeout(() => {
+            document.getElementById('successMessage').classList.add('hidden');
+        }, 3000);
+        
+        // Update view
+        checkAdmin();
+    }
+    
+    // Admin functions
+    function checkAdmin() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === 'true') {
+            // Admin view
+            document.getElementById('adminSection').classList.remove('hidden');
+            document.getElementById('passwordSection').classList.add('hidden');
+            document.getElementById('userForm').classList.add('hidden');
+        } else {
+            // Regular participant view
+            if (distributionResults && Object.keys(distributionResults).length > 0) {
+                // If distribution exists, show password entry
+                document.getElementById('passwordSection').classList.remove('hidden');
+                document.getElementById('userForm').classList.add('hidden');
+            } else {
+                // If no distribution yet, show submission form
+                document.getElementById('userForm').classList.remove('hidden');
+                document.getElementById('passwordSection').classList.add('hidden');
             }
         }
+    }
+    
+    function showAdminData() {
+        const adminData = document.getElementById('adminData');
+        adminData.innerHTML = '<h3>All Submissions:</h3>';
         
-        function showAdminData() {
-            const adminData = document.getElementById('adminData');
-            adminData.innerHTML = '<h3>All Submissions:</h3>';
-            
-            if (submissions.length === 0) {
-                adminData.innerHTML += '<p>No submissions yet.</p>';
-                return;
+        if (submissions.length === 0) {
+            adminData.innerHTML += '<p>No submissions yet.</p>';
+            return;
+        }
+        
+        // Create a table showing submissions
+        adminData.innerHTML += `
+            <table>
+                <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                    <th>Gift Suggestion</th>
+                    <th>Time Submitted</th>
+                </tr>
+                ${submissions.map((sub, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${sub.name}</td>
+                        <td>${sub.value}</td>
+                        <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
+                    </tr>
+                `).join('')}
+            </table>
+        `;
+    }
+    
+    // Randomly distribute values to names
+    function distributeValues() {
+        if (submissions.length === 0) {
+            alert('No submissions to distribute!');
+            return;
+        }
+        
+        if (nameList.length === 0) {
+            alert('No names in the list!');
+            return;
+        }
+        
+        // Get only the latest submission per person
+        const latestSubmissions = {};
+        submissions.forEach(sub => {
+            latestSubmissions[sub.name] = sub.value;
+        });
+        
+        const valuesToDistribute = Object.values(latestSubmissions);
+        const recipients = [...nameList];
+        
+        // Remove people who already submitted from recipients
+        Object.keys(latestSubmissions).forEach(name => {
+            const index = recipients.indexOf(name);
+            if (index > -1) {
+                recipients.splice(index, 1);
             }
-            
-            // Create a table showing only gift suggestions (no names)
-            adminData.innerHTML += `
+        });
+        
+        // Shuffle the values
+        const shuffledValues = [...valuesToDistribute].sort(() => 0.5 - Math.random());
+        
+        // Create distribution (each recipient gets one random gift)
+        const distribution = {};
+        passwordAssignments = {}; // Reset passwords
+        
+        recipients.forEach((recipient, index) => {
+            if (index < shuffledValues.length) {
+                // Find the original submitter of this value
+                const submitter = Object.keys(latestSubmissions).find(
+                    name => latestSubmissions[name] === shuffledValues[index]
+                );
+                
+                // Generate unique password for this recipient
+                const password = generatePassword();
+                
+                distribution[recipient] = {
+                    gift: shuffledValues[index],
+                    submitter: submitter || 'Unknown'
+                };
+                
+                passwordAssignments[password] = {
+                    recipient: recipient,
+                    gift: shuffledValues[index],
+                    submitter: submitter || 'Unknown'
+                };
+            }
+        });
+        
+        // Save distribution results and passwords
+        distributionResults = distribution;
+        localStorage.setItem('distributionResults', JSON.stringify(distributionResults));
+        localStorage.setItem('passwordAssignments', JSON.stringify(passwordAssignments));
+        
+        // Update view for participants
+        checkAdmin();
+        
+        // Display results
+        const resultsDiv = document.getElementById('distributionResults');
+        resultsDiv.innerHTML = '<h3>🎅 Secret Santa Assignments 🎅</h3>';
+        
+        if (Object.keys(distribution).length === 0) {
+            resultsDiv.innerHTML += '<p>Everyone has submitted, but no one left to distribute to!</p>';
+        } else {
+            resultsDiv.innerHTML += `
                 <table>
                     <tr>
-                        <th>No.</th>
-                        <th>Gift Suggestion</th>
-                        <th>Time Submitted</th>
+                        <th>Recipient</th>
+                        <th>Assigned Gift</th>
+                        <th>Submitter</th>
+                        <th>Password</th>
                     </tr>
-                    ${submissions.map((sub, index) => `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td class="anonymous">${sub.value}</td>
-                            <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
-                        </tr>
-                    `).join('')}
+                    ${Object.entries(distribution).map(([recipient, data]) => {
+                        const password = Object.keys(passwordAssignments).find(
+                            pwd => passwordAssignments[pwd].recipient === recipient
+                        );
+                        return `
+                            <tr>
+                                <td>${recipient}</td>
+                                <td>${data.gift}</td>
+                                <td>${data.submitter}</td>
+                                <td>${password || 'N/A'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </table>
-                <p class="anonymous">Note: Participant names are hidden to maintain anonymity</p>
+                <div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px;">
+                    <h4>Password Instructions</h4>
+                    <p>Each participant must enter their unique password to view their assigned gift.</p>
+                    <p>Share these passwords privately with each recipient.</p>
+                </div>
             `;
         }
         
-        // Randomly distribute values to names
-        function distributeValues() {
-            if (submissions.length === 0) {
-                alert('No submissions to distribute!');
-                return;
-            }
-            
-            if (nameList.length === 0) {
-                alert('No names in the list!');
-                return;
-            }
-            
-            // Get only the latest submission per person
-            const latestSubmissions = {};
-            submissions.forEach(sub => {
-                latestSubmissions[sub.name] = sub.value;
-            });
-            
-            const valuesToDistribute = Object.values(latestSubmissions);
-            const recipients = [...nameList];
-            
-            // Remove people who already submitted from recipients
-            Object.keys(latestSubmissions).forEach(name => {
-                const index = recipients.indexOf(name);
-                if (index > -1) {
-                    recipients.splice(index, 1);
-                }
-            });
-            
-            // Shuffle the values
-            const shuffledValues = [...valuesToDistribute].sort(() => 0.5 - Math.random());
-            
-            // Create distribution (each recipient gets one random gift)
-            const distribution = {};
-            recipients.forEach((recipient, index) => {
-                if (index < shuffledValues.length) {
-                    distribution[recipient] = [shuffledValues[index]];
-                }
-            });
-            
-            // Display results (without showing names)
-            const resultsDiv = document.getElementById('distributionResults');
-            resultsDiv.innerHTML = '<h3>🎅 Secret Santa Assignments 🎅</h3>';
-            
-            if (Object.keys(distribution).length === 0) {
-                resultsDiv.innerHTML += '<p>Everyone has submitted, but no one left to distribute to!</p>';
-            } else {
-                resultsDiv.innerHTML += `
-                    <p>Gifts have been randomly assigned to participants.</p>
-                    <p>Please check your private messages for your assigned gift.</p>
-                    <div class="anonymous">
-                        <p>Admin note: The system has assigned ${Object.keys(distribution).length} gifts to participants.</p>
-                    </div>
-                `;
-                
-                // For admin's reference only (hidden by default)
-                resultsDiv.innerHTML += `
-                    <details style="margin-top: 15px;">
-                        <summary>Admin Reference</summary>
-                        <table>
-                            <tr>
-                                <th>Recipient</th>
-                                <th>Gift Idea</th>
-                            </tr>
-                            ${Object.entries(distribution).map(([name, values]) => `
-                                <tr>
-                                    <td>${name}</td>
-                                    <td>${values.join(', ')}</td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    </details>
-                `;
-            }
-            
-            resultsDiv.classList.remove('hidden');
+        resultsDiv.classList.remove('hidden');
+    }
+    
+    // View assignment with password
+    function viewAssignment() {
+        const password = document.getElementById('userPassword').value.trim();
+        
+        if (!password) {
+            alert('Please enter your password!');
+            return;
         }
         
-        // Initialize on load
-        window.onload = function() {
-            initNameList();
-            checkAdmin();
-        };
-    </script>
+        const assignment = passwordAssignments[password];
+        const resultDiv = document.getElementById('assignmentResult');
+        
+        if (assignment) {
+            resultDiv.innerHTML = `
+                <div style="background: #e8f4fc; padding: 15px; border-radius: 4px;">
+                    <h3>Hello ${assignment.recipient}!</h3>
+                    <p>Your assigned gift is: <strong>${assignment.gift}</strong></p>
+                    <p>Submitted by: ${assignment.submitter}</p>
+                    <p style="font-style: italic;">Happy gifting! 🎁</p>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div style="background: #f8d7da; padding: 15px; border-radius: 4px; color: #721c24;">
+                    Invalid password. Please check your password and try again.
+                </div>
+            `;
+        }
+    }
+    
+    // Initialize on load
+    window.onload = function() {
+        initNameList();
+        
+        // Load existing data
+        const loadedDistribution = JSON.parse(localStorage.getItem('distributionResults'));
+        if (loadedDistribution) {
+            distributionResults = loadedDistribution;
+        }
+        
+        const loadedPasswords = JSON.parse(localStorage.getItem('passwordAssignments'));
+        if (loadedPasswords) {
+            passwordAssignments = loadedPasswords;
+        }
+        
+        checkAdmin();
+    };
+</script>
 </body>
 </html>
