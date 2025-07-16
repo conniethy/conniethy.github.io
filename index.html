@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Value Input App</title>
+    <title>Secret Santa</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        input, textarea, button {
+        input, button {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -36,110 +36,128 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
         }
         button:hover {
             background-color: #2980b9;
         }
-        #output {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e8f4fc;
-            border-radius: 4px;
+        .form-group {
+            margin-bottom: 20px;
         }
-        .value-item {
-            padding: 8px;
-            margin: 5px 0;
-            background-color: white;
-            border-radius: 4px;
+        .admin {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Value Input App</h1>
+        <h1>Secret Santa</h1>
         
-        <div>
-            <label for="valueInput">Enter a value:</label>
-            <input type="text" id="valueInput" placeholder="Type something...">
-            <button onclick="addValue()">Add Value</button>
+        <div id="userForm">
+            <div class="form-group">
+                <label>Your Name:</label>
+                <input type="text" id="userName" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Value 1:</label>
+                <input type="text" id="value1" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Value 2:</label>
+                <input type="text" id="value2" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Value 3:</label>
+                <input type="text" id="value3" required>
+            </div>
+            
+            <button onclick="submitForm()">Submit</button>
+            <p id="successMessage" class="hidden">Submitted successfully!</p>
         </div>
         
-        <div>
-            <label for="bulkInput">Or add multiple values (one per line):</label>
-            <textarea id="bulkInput" rows="5" placeholder="Value 1
-Value 2
-Value 3"></textarea>
-            <button onclick="addBulkValues()">Add Multiple Values</button>
-        </div>
-        
-        <div id="output">
-            <h3>Your Values:</h3>
-            <div id="valuesList"></div>
+        <div id="adminSection" class="admin hidden">
+            <h2>Admin View</h2>
+            <button onclick="showAdminData()">View Submissions</button>
+            <div id="adminData"></div>
         </div>
     </div>
 
     <script>
-        // Array to store all values
-        let values = [];
+        // Store all submissions
+        let submissions = JSON.parse(localStorage.getItem('secretSantaSubmissions')) || [];
         
-        // Add single value
-        function addValue() {
-            const input = document.getElementById('valueInput');
-            const value = input.value.trim();
+        // Submit form
+        function submitForm() {
+            const name = document.getElementById('userName').value.trim();
+            const value1 = document.getElementById('value1').value.trim();
+            const value2 = document.getElementById('value2').value.trim();
+            const value3 = document.getElementById('value3').value.trim();
             
-            if (value) {
-                values.push(value);
-                input.value = '';
-                updateDisplay();
-            }
-        }
-        
-        // Add multiple values
-        function addBulkValues() {
-            const textarea = document.getElementById('bulkInput');
-            const lines = textarea.value.split('\n');
-            
-            lines.forEach(line => {
-                const value = line.trim();
-                if (value) {
-                    values.push(value);
-                }
-            });
-            
-            textarea.value = '';
-            updateDisplay();
-        }
-        
-        // Update the displayed list
-        function updateDisplay() {
-            const listDiv = document.getElementById('valuesList');
-            listDiv.innerHTML = '';
-            
-            if (values.length === 0) {
-                listDiv.innerHTML = '<p>No values entered yet.</p>';
+            if (!name || !value1 || !value2 || !value3) {
+                alert('Please fill all fields!');
                 return;
             }
             
-            values.forEach((value, index) => {
-                const item = document.createElement('div');
-                item.className = 'value-item';
-                item.innerHTML = `
-                    <span>${index + 1}. ${value}</span>
-                    <button onclick="removeValue(${index})" style="float: right; width: auto; padding: 2px 8px;">×</button>
+            // Add to submissions
+            submissions.push({
+                name: name,
+                values: [value1, value2, value3],
+                timestamp: new Date().toISOString()
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('secretSantaSubmissions', JSON.stringify(submissions));
+            
+            // Show success
+            document.getElementById('successMessage').classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('userName').value = '';
+            document.getElementById('value1').value = '';
+            document.getElementById('value2').value = '';
+            document.getElementById('value3').value = '';
+            
+            // Show admin section if password is set
+            checkAdmin();
+        }
+        
+        // Admin functions
+        function checkAdmin() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                document.getElementById('adminSection').classList.remove('hidden');
+            }
+        }
+        
+        function showAdminData() {
+            const adminData = document.getElementById('adminData');
+            adminData.innerHTML = '<h3>All Submissions:</h3>';
+            
+            if (submissions.length === 0) {
+                adminData.innerHTML += '<p>No submissions yet.</p>';
+                return;
+            }
+            
+            submissions.forEach((sub, index) => {
+                adminData.innerHTML += `
+                    <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 4px;">
+                        <p><strong>${index + 1}. ${sub.name}</strong></p>
+                        <p>Values: ${sub.values.join(', ')}</p>
+                        <small>Submitted: ${new Date(sub.timestamp).toLocaleString()}</small>
+                    </div>
                 `;
-                listDiv.appendChild(item);
             });
         }
         
-        // Remove a value
-        function removeValue(index) {
-            values.splice(index, 1);
-            updateDisplay();
-        }
-        
-        // Initialize display
-        updateDisplay();
+        // Check for admin on load
+        checkAdmin();
     </script>
 </body>
 </html>
