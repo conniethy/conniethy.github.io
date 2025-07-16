@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Santa (Anonymous)</title>
+    <title>Secret Santa (Name + Password)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,6 +76,10 @@
         .view-btn {
             background-color: #e67e22;
         }
+        .reset-btn {
+            background-color: #e74c3c;
+            margin-top: 20px;
+        }
         .anonymous {
             font-style: italic;
             color: #777;
@@ -93,6 +97,12 @@
             border-radius: 4px;
             text-align: center;
             font-weight: bold;
+        }
+        .status-info {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e8f4fc;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -112,13 +122,13 @@
             </div>
             
             <div class="form-group">
-                <label>Create Your Password (For check result):</label>
+                <label>Create Your Password:</label>
                 <input type="password" id="userPassword" required placeholder="Create your secret password">
             </div>
             
             <div class="form-group">
-                <label>Keyword of your gift:</label>
-                <input type="text" id="userValue" required placeholder="">
+                <label>Your Gift Suggestion (HK$100-150):</label>
+                <input type="text" id="userValue" required placeholder="e.g. Starbucks Gift Card">
             </div>
             
             <button onclick="submitForm()">Submit</button>
@@ -127,16 +137,28 @@
         
         <div id="adminSection" class="admin hidden">
             <h2>Admin View</h2>
+            <div class="status-info">
+                <p><strong>${nameList.length}</strong> participants in list</p>
+                <p><strong>${Object.keys(credentialsDB).length}</strong> have created accounts</p>
+                <p><strong>${submissions.length}</strong> gift suggestions submitted</p>
+            </div>
             <button onclick="showAdminData()">View All Submissions</button>
             <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
+            <button onclick="resetDistribution()" class="reset-btn">🔄 Reset to Submission Phase</button>
             <div id="adminData"></div>
-            <div id="distributionResults" class="hidden"></div>
         </div>
         
         <div id="passwordSection" class="password-view hidden">
             <h2>View Your Assignment</h2>
             <div class="form-group">
-                <label>Enter Your Password:</label>
+                <label>Your Name:</label>
+                <select id="viewerName" required>
+                    <option value="">-- Select your name --</option>
+                    <!-- Names will be loaded from storage -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Your Password:</label>
                 <input type="password" id="viewerPassword" required placeholder="Your secret password">
             </div>
             <button onclick="viewAssignment()" class="view-btn">View My Gift</button>
@@ -145,29 +167,36 @@
     </div>
 
     <script>
-        // Store all submissions (without linking names to gifts)
+        // Store all submissions (anonymous)
         let submissions = JSON.parse(localStorage.getItem('anonymousSubmissions')) || [];
-        // Store passwords separately (name -> password)
-        let passwordDatabase = JSON.parse(localStorage.getItem('passwordDatabase')) || {};
+        // Store name+password combinations
+        let credentialsDB = JSON.parse(localStorage.getItem('credentialsDB')) || {};
         // Store the list of names
         let nameList = JSON.parse(localStorage.getItem('nameList')) || 
                       ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
         // Store distribution results
         let distributionResults = JSON.parse(localStorage.getItem('distributionResults')) || null;
         
-        // Initialize the name dropdown
-        function initNameList() {
-            const select = document.getElementById('userName');
+        // Initialize name dropdowns
+        function initNameLists() {
+            const submitSelect = document.getElementById('userName');
+            const viewSelect = document.getElementById('viewerName');
+            
             // Clear existing options except the first one
-            while (select.options.length > 1) {
-                select.remove(1);
-            }
+            while (submitSelect.options.length > 1) submitSelect.remove(1);
+            while (viewSelect.options.length > 1) viewSelect.remove(1);
+            
             // Add names from nameList
             nameList.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                select.appendChild(option);
+                const option1 = document.createElement('option');
+                option1.value = name;
+                option1.textContent = name;
+                submitSelect.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = name;
+                option2.textContent = name;
+                viewSelect.appendChild(option2);
             });
         }
         
@@ -175,11 +204,23 @@
         function updatePhaseIndicator() {
             const indicator = document.getElementById('phaseIndicator');
             if (distributionResults && Object.keys(distributionResults).length > 0) {
-                indicator.innerHTML = '🎅 DISTRIBUTION PHASE: Enter your password to view your assigned gift';
+                indicator.innerHTML = '🎅 DISTRIBUTION PHASE: Enter your name and password to view your gift';
             } else if (submissions.length > 0) {
                 indicator.innerHTML = '✏️ SUBMISSION PHASE: Please submit your gift suggestion';
             } else {
                 indicator.innerHTML = '✨ WELCOME: Please submit your gift suggestion';
+            }
+            
+            // Update status info in admin panel
+            if (document.getElementById('adminSection') && !document.getElementById('adminSection').classList.contains('hidden')) {
+                const statusInfo = document.querySelector('.status-info');
+                if (statusInfo) {
+                    statusInfo.innerHTML = `
+                        <p><strong>${nameList.length}</strong> participants in list</p>
+                        <p><strong>${Object.keys(credentialsDB).length}</strong> have created accounts</p>
+                        <p><strong>${submissions.length}</strong> gift suggestions submitted</p>
+                    `;
+                }
             }
         }
         
@@ -194,23 +235,30 @@
                 return;
             }
             
-            // Check if password already exists
-            if (passwordDatabase[name] && passwordDatabase[name] !== password) {
-                alert('This name already has a different password!');
-                return;
+            // Store credentials (name -> password)
+            credentialsDB[name] = password;
+            localStorage.setItem('credentialsDB', JSON.stringify(credentialsDB));
+            
+            // Check if this user already submitted (prevent duplicates)
+            const existingIndex = submissions.findIndex(sub => sub.user === name);
+            if (existingIndex >= 0) {
+                submissions[existingIndex] = {
+                    id: submissions[existingIndex].id,
+                    user: name,
+                    value: value,
+                    timestamp: new Date().toISOString()
+                };
+            } else {
+                // Add to submissions (store user reference but admin can't see it)
+                const submissionId = 'sub_' + Math.random().toString(36).substr(2, 9);
+                submissions.push({
+                    id: submissionId,
+                    user: name,  // Store user reference but admin won't see this
+                    value: value,
+                    timestamp: new Date().toISOString()
+                });
             }
             
-            // Store password (name -> password mapping)
-            passwordDatabase[name] = password;
-            localStorage.setItem('passwordDatabase', JSON.stringify(passwordDatabase));
-            
-            // Add to submissions (without linking name to gift)
-            const submissionId = 'sub_' + Math.random().toString(36).substr(2, 9);
-            submissions.push({
-                id: submissionId,
-                value: value,
-                timestamp: new Date().toISOString()
-            });
             localStorage.setItem('anonymousSubmissions', JSON.stringify(submissions));
             
             // Show success
@@ -248,6 +296,8 @@
                     document.getElementById('passwordSection').classList.add('hidden');
                 }
             }
+            
+            updatePhaseIndicator();
         }
         
         function showAdminData() {
@@ -259,7 +309,7 @@
                 return;
             }
             
-            // Create a table showing anonymous submissions
+            // Create a table showing anonymous submissions (without user info)
             adminData.innerHTML += `
                 <table>
                     <tr>
@@ -286,27 +336,48 @@
                 return;
             }
             
-            if (nameList.length === 0) {
-                alert('No names in the list!');
+            // Get list of users who have both:
+            // 1. Created an account (name + password)
+            // 2. Submitted a gift suggestion
+            const eligibleUsers = [];
+            nameList.forEach(name => {
+                // Check if user has an account
+                const hasAccount = credentialsDB.hasOwnProperty(name);
+                // Check if user has submitted a gift
+                const hasSubmitted = submissions.some(sub => sub.user === name);
+                
+                if (hasAccount && hasSubmitted) {
+                    eligibleUsers.push(name);
+                }
+            });
+            
+            if (eligibleUsers.length === 0) {
+                alert('No eligible participants found! Participants must:\n1. Create an account\n2. Submit a gift suggestion');
                 return;
             }
             
-            // Shuffle the gifts
-            const shuffledGifts = [...submissions].sort(() => 0.5 - Math.random()).map(s => s.value);
+            if (eligibleUsers.length === 1) {
+                alert('Need at least 2 eligible participants to distribute gifts!');
+                return;
+            }
             
-            // Shuffle the recipients
-            const shuffledRecipients = [...nameList].sort(() => 0.5 - Math.random());
+            // Shuffle the eligible users
+            const shuffledUsers = [...eligibleUsers].sort(() => 0.5 - Math.random());
             
-            // Create distribution (each recipient gets one random gift)
+            // Create distribution (each user gets another user's gift)
             distributionResults = {};
-            shuffledRecipients.forEach((recipient, index) => {
-                if (index < shuffledGifts.length) {
-                    distributionResults[recipient] = {
-                        gift: shuffledGifts[index],
-                        password: passwordDatabase[recipient] || 'not_set'
-                    };
+            
+            // Create a circular assignment
+            for (let i = 0; i < shuffledUsers.length; i++) {
+                const giver = shuffledUsers[i];
+                const receiver = shuffledUsers[(i + 1) % shuffledUsers.length];
+                
+                // Find the receiver's gift submission
+                const receiverSubmission = submissions.find(sub => sub.user === receiver);
+                if (receiverSubmission) {
+                    distributionResults[giver] = receiverSubmission.value;
                 }
-            });
+            }
             
             // Save distribution results
             localStorage.setItem('distributionResults', JSON.stringify(distributionResults));
@@ -315,65 +386,71 @@
             checkAdmin();
             updatePhaseIndicator();
             
-            // Display results (admin only sees recipient + gift, not who submitted it)
-            const resultsDiv = document.getElementById('distributionResults');
-            resultsDiv.innerHTML = '<h3>🎅 Secret Santa Assignments 🎅</h3>';
-            
-            if (Object.keys(distributionResults).length === 0) {
-                resultsDiv.innerHTML += '<p>No valid distributions made!</p>';
-            } else {
-                resultsDiv.innerHTML += `
-                    <table>
-                        <tr>
-                            <th>Recipient</th>
-                            <th>Assigned Gift</th>
-                        </tr>
-                        ${Object.entries(distributionResults).map(([recipient, data]) => `
-                            <tr>
-                                <td>${recipient}</td>
-                                <td>${data.gift}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                    <div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px;">
-                        <h4>Instructions</h4>
-                        <p>Participants can view their assigned gift by entering their password on the main page.</p>
-                        <p><strong>Admin cannot see who submitted which gift.</strong></p>
-                    </div>
-                `;
-            }
-            
-            resultsDiv.classList.remove('hidden');
+            // Show success message to admin
+            const adminData = document.getElementById('adminData');
+            adminData.innerHTML = `
+                <div style="background: #d4edda; padding: 15px; border-radius: 4px; color: #155724; margin-top: 20px;">
+                    <h3>🎅 Distribution Successful!</h3>
+                    <p>Gifts have been distributed to <strong>${eligibleUsers.length}</strong> eligible participants.</p>
+                    <p>Participants can now view their assigned gifts by entering their name and password.</p>
+                </div>
+            `;
         }
         
-        // View assignment with password
+        // Reset distribution and go back to submission phase
+        function resetDistribution() {
+            if (confirm('Are you sure you want to reset the distribution?\n\nThis will:' + 
+                       '\n- Clear all gift assignments' + 
+                       '\n- Allow participants to submit new gift suggestions' +
+                       '\n\nExisting accounts and submissions will remain.')) {
+                // Clear distribution results
+                distributionResults = null;
+                localStorage.removeItem('distributionResults');
+                
+                // Update views
+                checkAdmin();
+                updatePhaseIndicator();
+                
+                // Clear the admin data display
+                document.getElementById('adminData').innerHTML = '';
+            }
+        }
+        
+        // View assignment with name + password
         function viewAssignment() {
+            const name = document.getElementById('viewerName').value;
             const password = document.getElementById('viewerPassword').value.trim();
             
-            if (!password) {
-                alert('Please enter your password!');
+            if (!name || !password) {
+                alert('Please enter both name and password!');
                 return;
             }
             
-            // Find which name this password belongs to
-            const name = Object.keys(passwordDatabase).find(
-                name => passwordDatabase[name] === password
-            );
-            
             const resultDiv = document.getElementById('assignmentResult');
             
-            if (name && distributionResults[name]) {
+            // Verify credentials
+            if (credentialsDB[name] !== password) {
+                resultDiv.innerHTML = `
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 4px; color: #721c24;">
+                        Invalid name/password combination. Please try again.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Check if assignment exists
+            if (distributionResults && distributionResults[name]) {
                 resultDiv.innerHTML = `
                     <div style="background: #e8f4fc; padding: 15px; border-radius: 4px;">
                         <h3>Hello ${name}!</h3>
-                        <p>Your assigned gift is: <strong>${distributionResults[name].gift}</strong></p>
+                        <p>Your assigned gift is: <strong>${distributionResults[name]}</strong></p>
                         <p style="font-style: italic;">Happy gifting! 🎁</p>
                     </div>
                 `;
             } else {
                 resultDiv.innerHTML = `
-                    <div style="background: #f8d7da; padding: 15px; border-radius: 4px; color: #721c24;">
-                        Invalid password or no assignment found. Please check your password and try again.
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 4px; color: #856404;">
+                        No assignment found for ${name}. Please contact the organizer.
                     </div>
                 `;
             }
@@ -381,14 +458,14 @@
         
         // Initialize on load
         window.onload = function() {
-            initNameList();
+            initNameLists();
             
             // Load existing data
             const loadedSubmissions = JSON.parse(localStorage.getItem('anonymousSubmissions'));
             if (loadedSubmissions) submissions = loadedSubmissions;
             
-            const loadedPasswords = JSON.parse(localStorage.getItem('passwordDatabase'));
-            if (loadedPasswords) passwordDatabase = loadedPasswords;
+            const loadedCredentials = JSON.parse(localStorage.getItem('credentialsDB'));
+            if (loadedCredentials) credentialsDB = loadedCredentials;
             
             const loadedDistribution = JSON.parse(localStorage.getItem('distributionResults'));
             if (loadedDistribution) distributionResults = loadedDistribution;
