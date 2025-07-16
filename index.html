@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List Submission with Distribution</title>
+    <title>Secret Santa</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,6 +73,10 @@
             background-color: #27ae60;
             margin-bottom: 20px;
         }
+        .anonymous {
+            font-style: italic;
+            color: #777;
+        }
     </style>
 </head>
 <body>
@@ -89,7 +93,7 @@
             </div>
             
             <div class="form-group">
-                <label>Key Word :</label>
+                <label>Key Word:</label>
                 <input type="text" id="userValue" required placeholder="">
             </div>
             
@@ -103,12 +107,6 @@
             <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
             <div id="adminData"></div>
             <div id="distributionResults" class="hidden"></div>
-            
-            <div style="margin-top: 20px;">
-                <h3>Manage Name List</h3>
-                <input type="text" id="newName" placeholder="Enter new name">
-                <button onclick="addNewName()">Add Name</button>
-            </div>
         </div>
     </div>
 
@@ -187,53 +185,24 @@
                 return;
             }
             
-            // Create a table for better display
+            // Create a table showing only gift suggestions (no names)
             adminData.innerHTML += `
                 <table>
                     <tr>
                         <th>No.</th>
-                        <th>Name</th>
                         <th>Gift Suggestion</th>
-                        <th>Time</th>
+                        <th>Time Submitted</th>
                     </tr>
                     ${submissions.map((sub, index) => `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${sub.name}</td>
-                            <td>${sub.value}</td>
-                            <td>${new Date(sub.timestamp).toLocaleString()}</td>
+                            <td class="anonymous">${sub.value}</td>
+                            <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
                         </tr>
                     `).join('')}
                 </table>
+                <p class="anonymous">Note: Participant names are hidden to maintain anonymity</p>
             `;
-        }
-        
-        // Add new name to the list
-        function addNewName() {
-            const newNameInput = document.getElementById('newName');
-            const newName = newNameInput.value.trim();
-            
-            if (!newName) {
-                alert('Please enter a name!');
-                return;
-            }
-            
-            if (nameList.includes(newName)) {
-                alert('This name already exists!');
-                return;
-            }
-            
-            // Add to nameList
-            nameList.push(newName);
-            localStorage.setItem('nameList', JSON.stringify(nameList));
-            
-            // Update dropdown
-            initNameList();
-            
-            // Clear input
-            newNameInput.value = '';
-            
-            alert(`"${newName}" added to the list!`);
         }
         
         // Randomly distribute values to names
@@ -276,7 +245,7 @@
                 }
             });
             
-            // Display results
+            // Display results (without showing names)
             const resultsDiv = document.getElementById('distributionResults');
             resultsDiv.innerHTML = '<h3>🎅 Secret Santa Assignments 🎅</h3>';
             
@@ -284,21 +253,30 @@
                 resultsDiv.innerHTML += '<p>Everyone has submitted, but no one left to distribute to!</p>';
             } else {
                 resultsDiv.innerHTML += `
-                    <table>
-                        <tr>
-                            <th>Recipient</th>
-                            <th>Gift Idea</th>
-                        </tr>
-                        ${Object.entries(distribution).map(([name, values]) => `
+                    <p>Gifts have been randomly assigned to participants.</p>
+                    <p>Please check your private messages for your assigned gift.</p>
+                    <div class="anonymous">
+                        <p>Admin note: The system has assigned ${Object.keys(distribution).length} gifts to participants.</p>
+                    </div>
+                `;
+                
+                // For admin's reference only (hidden by default)
+                resultsDiv.innerHTML += `
+                    <details style="margin-top: 15px;">
+                        <summary>Admin Reference</summary>
+                        <table>
                             <tr>
-                                <td>${name}</td>
-                                <td>${values.join(', ')}</td>
+                                <th>Recipient</th>
+                                <th>Gift Idea</th>
                             </tr>
-                        `).join('')}
-                    </table>
-                    <p style="margin-top: 15px; font-style: italic;">
-                        Note: Each person receives one gift suggestion from the submitted list.
-                    </p>
+                            ${Object.entries(distribution).map(([name, values]) => `
+                                <tr>
+                                    <td>${name}</td>
+                                    <td>${values.join(', ')}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </details>
                 `;
             }
             
