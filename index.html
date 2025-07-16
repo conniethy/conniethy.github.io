@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Santa</title>
+    <title>Simple Submission App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,11 +51,15 @@
         .hidden {
             display: none;
         }
+        .success {
+            color: green;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Secret Santa</h1>
+        <h1>Submission Form</h1>
         
         <div id="userForm">
             <div class="form-group">
@@ -64,65 +68,56 @@
             </div>
             
             <div class="form-group">
-                <label>Value 1:</label>
-                <input type="text" id="value1" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Value 2:</label>
-                <input type="text" id="value2" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Value 3:</label>
-                <input type="text" id="value3" required>
+                <label>Your Value:</label>
+                <input type="text" id="userValue" required>
             </div>
             
             <button onclick="submitForm()">Submit</button>
-            <p id="successMessage" class="hidden">Submitted successfully!</p>
+            <p id="successMessage" class="hidden success">Submitted successfully!</p>
         </div>
         
         <div id="adminSection" class="admin hidden">
             <h2>Admin View</h2>
-            <button onclick="showAdminData()">View Submissions</button>
+            <button onclick="showAdminData()">View All Submissions</button>
             <div id="adminData"></div>
         </div>
     </div>
 
     <script>
         // Store all submissions
-        let submissions = JSON.parse(localStorage.getItem('secretSantaSubmissions')) || [];
+        let submissions = JSON.parse(localStorage.getItem('simpleSubmissions')) || [];
         
         // Submit form
         function submitForm() {
             const name = document.getElementById('userName').value.trim();
-            const value1 = document.getElementById('value1').value.trim();
-            const value2 = document.getElementById('value2').value.trim();
-            const value3 = document.getElementById('value3').value.trim();
+            const value = document.getElementById('userValue').value.trim();
             
-            if (!name || !value1 || !value2 || !value3) {
-                alert('Please fill all fields!');
+            if (!name || !value) {
+                alert('Please fill both fields!');
                 return;
             }
             
             // Add to submissions
             submissions.push({
                 name: name,
-                values: [value1, value2, value3],
+                value: value,
                 timestamp: new Date().toISOString()
             });
             
             // Save to localStorage
-            localStorage.setItem('secretSantaSubmissions', JSON.stringify(submissions));
+            localStorage.setItem('simpleSubmissions', JSON.stringify(submissions));
             
             // Show success
             document.getElementById('successMessage').classList.remove('hidden');
             
             // Clear form
             document.getElementById('userName').value = '';
-            document.getElementById('value1').value = '';
-            document.getElementById('value2').value = '';
-            document.getElementById('value3').value = '';
+            document.getElementById('userValue').value = '';
+            
+            // Hide success after 3 seconds
+            setTimeout(() => {
+                document.getElementById('successMessage').classList.add('hidden');
+            }, 3000);
             
             // Show admin section if password is set
             checkAdmin();
@@ -145,15 +140,25 @@
                 return;
             }
             
-            submissions.forEach((sub, index) => {
-                adminData.innerHTML += `
-                    <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 4px;">
-                        <p><strong>${index + 1}. ${sub.name}</strong></p>
-                        <p>Values: ${sub.values.join(', ')}</p>
-                        <small>Submitted: ${new Date(sub.timestamp).toLocaleString()}</small>
-                    </div>
-                `;
-            });
+            // Create a table for better display
+            adminData.innerHTML += `
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr style="background-color: #3498db; color: white;">
+                        <th style="padding: 8px; text-align: left;">No.</th>
+                        <th style="padding: 8px; text-align: left;">Name</th>
+                        <th style="padding: 8px; text-align: left;">Value</th>
+                        <th style="padding: 8px; text-align: left;">Time</th>
+                    </tr>
+                    ${submissions.map((sub, index) => `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${index + 1}</td>
+                            <td style="padding: 8px;">${sub.name}</td>
+                            <td style="padding: 8px;">${sub.value}</td>
+                            <td style="padding: 8px;">${new Date(sub.timestamp).toLocaleString()}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
         }
         
         // Check for admin on load
