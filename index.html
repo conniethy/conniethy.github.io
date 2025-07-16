@@ -114,7 +114,7 @@
         
         <div id="userForm">
             <div class="form-group">
-                <label>Select Your Name:</label>
+                <label>你個名:</label>
                 <select id="userName" required>
                     <option value="">-- Select your name --</option>
                     <!-- Names will be loaded from storage -->
@@ -122,13 +122,13 @@
             </div>
             
             <div class="form-group">
-                <label>Create Your Password:</label>
-                <input type="password" id="userPassword" required placeholder="Create your secret password">
+                <label>密碼 (自己記往! Admin唔會知你咩密碼):</label>
+                <input type="password" id="userPassword" required placeholder="Secret password">
             </div>
             
             <div class="form-group">
-                <label>Your Gift Suggestion (HK$100-150):</label>
-                <input type="text" id="userValue" required placeholder="e.g. Starbucks Gift Card">
+                <label>關鍵字:</label>
+                <input type="text" id="userValue" required placeholder="">
             </div>
             
             <button onclick="submitForm()">Submit</button>
@@ -149,19 +149,19 @@
         </div>
         
         <div id="passwordSection" class="password-view hidden">
-            <h2>View Your Assignment</h2>
+            <h2>睇下要送啲咩</h2>
             <div class="form-group">
-                <label>Your Name:</label>
+                <label>你個名:</label>
                 <select id="viewerName" required>
                     <option value="">-- Select your name --</option>
                     <!-- Names will be loaded from storage -->
                 </select>
             </div>
             <div class="form-group">
-                <label>Your Password:</label>
+                <label>密碼:</label>
                 <input type="password" id="viewerPassword" required placeholder="Your secret password">
             </div>
-            <button onclick="viewAssignment()" class="view-btn">View My Gift</button>
+            <button onclick="viewAssignment()" class="view-btn">Submit</button>
             <div id="assignmentResult" style="margin-top: 20px;"></div>
         </div>
     </div>
@@ -204,9 +204,9 @@
         function updatePhaseIndicator() {
             const indicator = document.getElementById('phaseIndicator');
             if (distributionResults && Object.keys(distributionResults).length > 0) {
-                indicator.innerHTML = '🎅 DISTRIBUTION PHASE: Enter your name and password to view your gift';
+                indicator.innerHTML = '🎅 揀翻你個名同入翻密碼就可以知道你要送咩比人 !';
             } else if (submissions.length > 0) {
-                indicator.innerHTML = '✏️ SUBMISSION PHASE: Please submit your gift suggestion';
+                indicator.innerHTML = '✏️ 你想收到禮物嘅關鍵字';
             } else {
                 indicator.innerHTML = '✨ WELCOME: Please submit your gift suggestion';
             }
@@ -442,9 +442,9 @@
             if (distributionResults && distributionResults[name]) {
                 resultDiv.innerHTML = `
                     <div style="background: #e8f4fc; padding: 15px; border-radius: 4px;">
-                        <h3>Hello ${name}!</h3>
-                        <p>Your assigned gift is: <strong>${distributionResults[name]}</strong></p>
-                        <p style="font-style: italic;">Happy gifting! 🎁</p>
+                        <h3>Hi ${name}!</h3>
+                        <p>你要買個份禮物嘅keyword係 <strong>${distributionResults[name]}</strong></p>
+                        <p style="font-style: italic;"> Merry Christmas! 🎁</p>
                     </div>
                 `;
             } else {
