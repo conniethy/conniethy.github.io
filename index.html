@@ -3,558 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Santa (Name + Password)</title>
+    <title>Secret Santa</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
             padding: 20px;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         h1 {
-            color: #2c3e50;
+            color: #d35400;
             text-align: center;
         }
         .container {
-            background-color: #f9f9f9;
+            background: #f8f9fa;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        select, input, button {
+        select, input, button, textarea {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
+            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
         }
         button {
-            background-color: #3498db;
             color: white;
             border: none;
             cursor: pointer;
-            font-size: 16px;
+            font-weight: bold;
         }
         button:hover {
-            background-color: #2980b9;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .admin {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            opacity: 0.9;
         }
         .hidden {
             display: none;
         }
-        .success {
-            color: green;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .message {
+            padding: 10px;
             margin: 10px 0;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-        }
-        .distribute-btn {
-            background-color: #27ae60;
-            margin-bottom: 20px;
-        }
-        .view-btn {
-            background-color: #e67e22;
-        }
-        .reset-btn {
-            background-color: #e74c3c;
-            margin-top: 20px;
-        }
-        .anonymous {
-            font-style: italic;
-            color: #777;
-        }
-        .password-view {
-            margin-top: 40px;
-            padding: 20px;
-            background-color: #e8f4fc;
-            border-radius: 8px;
-        }
-        .phase-indicator {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #fff3cd;
             border-radius: 4px;
             text-align: center;
-            font-weight: bold;
         }
-        .status-info {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #e8f4fc;
-            border-radius: 4px;
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #e7f5fe;
+            color: #0c5460;
+        }
+        .admin-panel {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
         }
         .reset-options {
             margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
+            border: 1px solid #ddd;
             border-radius: 5px;
+            padding: 10px;
         }
-        .reset-type {
-            margin: 10px 0;
+        .reset-btn {
+            margin: 5px 0;
+            width: 100%;
         }
-        .danger-zone {
-            border-left: 4px solid #e74c3c;
+        .btn-primary {
+            background: #3498db;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .reset-description {
+            font-size: 0.9em;
+            margin: 5px 0 15px;
             padding-left: 10px;
+            border-left: 3px solid #eee;
+        }
+        .submissions-list {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .submission-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .submission-item:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .duplicate-warning {
+            background-color: #fff3cd;
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .user-management {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+        .flex-row input {
+            flex-grow: 1;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Secret Santa</h1>
+        <h1>🎅 Secret Santa 🎄</h1>
         
-        <div id="phaseIndicator" class="phase-indicator"></div>
+        <div id="statusMessage" class="message hidden"></div>
         
-        <div id="userForm">
-            <div class="form-group">
-                <label>你個名:</label>
-                <select id="userName" required>
-                    <option value="">-- Select your name --</option>
-                    <!-- Names will be loaded from storage -->
+        <!-- Submission Form -->
+        <div id="submitForm">
+            <select id="userName" required>
+                <option value="">-- Select Your Name --</option>
+                <!-- Names will be added by JavaScript -->
+            </select>
+            
+            <input type="password" id="userPassword" placeholder="Your Password" required>
+            
+            <input type="text" id="giftIdea" placeholder="Your Gift Idea/Keyword" required>
+            
+            <button class="btn-primary" onclick="saveEntry()">Submit</button>
+        </div>
+        
+        <!-- View Assignment -->
+        <div id="viewAssignment" class="hidden">
+            <select id="viewerName" required>
+                <option value="">-- Select Your Name --</option>
+                <!-- Names will be added by JavaScript -->
+            </select>
+            
+            <input type="password" id="viewerPassword" placeholder="Your Password" required>
+            
+            <button class="btn-primary" onclick="checkAssignment()">View Your Assignment</button>
+            
+            <div id="assignmentResult" class="message hidden"></div>
+        </div>
+        
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="admin-panel hidden">
+            <h3>Admin Controls</h3>
+            <div id="stats" class="message info"></div>
+            <button class="btn-primary" onclick="runDistribution()">Distribute Gifts</button>
+            <button class="btn-primary" onclick="viewSubmissions()">View All Submissions</button>
+            
+            <div id="submissionsView" class="hidden">
+                <h4>Anonymous Gift Submissions:</h4>
+                <div id="duplicateWarnings"></div>
+                <div id="submissionsList" class="submissions-list"></div>
+                <p><em>Note: Admin cannot see who submitted which gift</em></p>
+            </div>
+            
+            <!-- User Management -->
+            <div class="user-management">
+                <h4>Manage Participants</h4>
+                <div class="flex-row">
+                    <input type="text" id="newUserName" placeholder="New participant name">
+                    <button class="btn-success" onclick="addParticipant()">Add</button>
+                </div>
+                
+                <select id="userToDelete">
+                    <option value="">-- Select user to remove --</option>
                 </select>
+                <button class="btn-danger" onclick="removeParticipant()">Remove Selected</button>
             </div>
             
-            <div class="form-group">
-                <label>密碼 (自己記往! Admin唔會知你咩密碼):</label>
-                <input type="password" id="userPassword" required placeholder="Secret password">
+            <!-- Reset Options -->
+            <button class="btn-warning" onclick="toggleResetOptions()">Reset Options ▼</button>
+            
+            <div id="resetOptions" class="reset-options hidden">
+                <!-- 1. Back to submission step -->
+                <button onclick="softReset()" class="reset-btn btn-warning">
+                    1. Reopen Submissions
+                </button>
+                <div class="reset-description">
+                    Allows participants to submit/change gifts again<br>
+                    - Clears current assignments only<br>
+                    - Keeps all passwords and gift ideas
+                </div>
+                
+                <!-- 2. Reset distribution -->
+                <button onclick="mediumReset()" class="reset-btn btn-primary">
+                    2. Redistribute Gifts
+                </button>
+                <div class="reset-description">
+                    Creates new random assignments<br>
+                    - Keeps all existing data<br>
+                    - Just reshuffles who gets which gift
+                </div>
+                
+                <!-- 3. Delete all records -->
+                <button onclick="confirmHardReset()" class="reset-btn btn-danger">
+                    3. Nuclear Reset
+                </button>
+                <div class="reset-description">
+                    COMPLETELY wipes all data:<br>
+                    - All passwords<br>
+                    - All gift ideas<br>
+                    - All assignments
+                </div>
             </div>
             
-            <div class="form-group">
-                <label>關鍵字:</label>
-                <input type="text" id="userValue" required placeholder="">
-            </div>
-            
-            <button onclick="submitForm()">Submit</button>
-            <p id="successMessage" class="hidden success">Submitted successfully!</p>
-        </div>
-        
-        <div id="adminSection" class="admin hidden">
-            <h2>Admin View</h2>
-            <div class="status-info">
-                <p><strong>${nameList.length}</strong> participants in list</p>
-                <p><strong>${Object.keys(credentialsDB).length}</strong> have created accounts</p>
-                <p><strong>${submissions.length}</strong> gift suggestions submitted</p>
-            </div>
-            <button onclick="showAdminData()">View All Submissions</button>
-            <button onclick="distributeValues()" class="distribute-btn">🎄 Distribute Gifts Randomly 🎄</button>
-            <button onclick="resetDistribution()" class="reset-btn">🔄 Reset to Submission Phase</button>
-		<button onclick="showResetOptions()" class="reset-btn">🔄 Reset System</button>
-
-        	<!-- Reset options panel (hidden by default) -->
-		<div id="resetOptions" class="reset-options hidden">
-            <div class="reset-type">
-                <h4>Soft Reset:</h4>
-                <p>Only clears current gift distribution (keeps all accounts and submissions)</p>
-                <button onclick="performReset('soft')">Reset Distribution Only</button>
-            </div>
-            
-            <div class="reset-type danger-zone">
-                <h4>Hard Reset:</h4>
-                <p>⚠️ Deletes ALL data (accounts, submissions, and distribution)</p>
-                <button onclick="confirmHardReset()" style="background-color: #e74c3c;">Delete All Records</button>
-            </div>
-            
-            <button onclick="hideResetOptions()" style="margin-top: 10px;">Cancel</button>
-        </div>
-            <div id="adminData"></div>
-        </div>
-        
-        <div id="passwordSection" class="password-view hidden">
-            <h2>睇下要送啲咩</h2>
-            <div class="form-group">
-                <label>你個名:</label>
-                <select id="viewerName" required>
-                    <option value="">-- Select your name --</option>
-                    <!-- Names will be loaded from storage -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label>密碼:</label>
-                <input type="password" id="viewerPassword" required placeholder="Your secret password">
-            </div>
-            <button onclick="viewAssignment()" class="view-btn">Submit</button>
-            <div id="assignmentResult" style="margin-top: 20px;"></div>
+            <div id="adminResults" class="message hidden"></div>
         </div>
     </div>
 
     <script>
-        function showResetOptions() {
-            document.getElementById('resetOptions').classList.remove('hidden');
-        }
-        
-        // Hide reset options panel
-        function hideResetOptions() {
-            document.getElementById('resetOptions').classList.add('hidden');
-        }
-        
-        // Confirm hard reset
-        function confirmHardReset() {
-            if (confirm('⚠️ DANGER: This will PERMANENTLY delete:\n\n' +
-                       '- All gift submissions\n' +
-                       '- All account passwords\n' +
-                       '- Current distribution\n\n' +
-                       'This cannot be undone!')) {
-                performReset('hard');
-            }
-        }
-        
-        // Perform the actual reset
-        function performReset(type) {
-            if (type === 'hard') {
-                // Clear ALL data
-                localStorage.removeItem('anonymousSubmissions');
-                localStorage.removeItem('credentialsDB');
-                localStorage.removeItem('distributionResults');
-                localStorage.removeItem('showRawFor');
-                
-                // Reset in-memory data
-                submissions = [];
-                credentialsDB = {};
-                distributionResults = null;
-                showRawFor = {};
-            } else {
-                // Soft reset - only clear distribution
-                localStorage.removeItem('distributionResults');
-                distributionResults = null;
-            }
+        // Data storage
+        let participants = JSON.parse(localStorage.getItem('santaParticipants')) || ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
+        let submissions = JSON.parse(localStorage.getItem('santaSubmissions')) || [];
+        let passwords = JSON.parse(localStorage.getItem('santaPasswords')) || {};
+        let assignments = JSON.parse(localStorage.getItem('santaAssignments')) || null;
+        let submissionTimestamps = JSON.parse(localStorage.getItem('santaTimestamps')) || {};
+
+        // Initialize the app
+        function init() {
+            populateDropdowns();
+            checkMode();
+            updateStats();
             
-            // Update UI
-            hideResetOptions();
-            checkAdmin();
-            updatePhaseIndicator();
-            showAdminData();
-            
-            // Show confirmation
-            alert(type === 'hard' 
-                ? 'All data has been deleted' 
-                : 'Gift distribution has been reset');
-        }
-        // Store all submissions (anonymous)
-        let submissions = JSON.parse(localStorage.getItem('anonymousSubmissions')) || [];
-        // Store name+password combinations
-        let credentialsDB = JSON.parse(localStorage.getItem('credentialsDB')) || {};
-        // Store the list of names
-        let nameList = JSON.parse(localStorage.getItem('nameList')) || 
-                      ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
-        // Store distribution results
-        let distributionResults = JSON.parse(localStorage.getItem('distributionResults')) || null;
-        
-        // Initialize name dropdowns
-        function initNameLists() {
-            const submitSelect = document.getElementById('userName');
-            const viewSelect = document.getElementById('viewerName');
-            
-            // Clear existing options except the first one
-            while (submitSelect.options.length > 1) submitSelect.remove(1);
-            while (viewSelect.options.length > 1) viewSelect.remove(1);
-            
-            // Add names from nameList
-            nameList.forEach(name => {
-                const option1 = document.createElement('option');
-                option1.value = name;
-                option1.textContent = name;
-                submitSelect.appendChild(option1);
-                
-                const option2 = document.createElement('option');
-                option2.value = name;
-                option2.textContent = name;
-                viewSelect.appendChild(option2);
-            });
-        }
-        
-        // Update phase indicator
-        function updatePhaseIndicator() {
-            const indicator = document.getElementById('phaseIndicator');
-            if (distributionResults && Object.keys(distributionResults).length > 0) {
-                indicator.innerHTML = '🎅 揀翻你個名同入翻密碼就可以知道你要送咩比人 !';
-            } else if (submissions.length > 0) {
-                indicator.innerHTML = '✏️ 入個關鍵字 !';
-            } else {
-                indicator.innerHTML = '✨ 入個關鍵字 !';
-            }
-            
-            // Update status info in admin panel
-            if (document.getElementById('adminSection') && !document.getElementById('adminSection').classList.contains('hidden')) {
-                const statusInfo = document.querySelector('.status-info');
-                if (statusInfo) {
-                    statusInfo.innerHTML = `
-                        <p><strong>${nameList.length}</strong> participants in list</p>
-                        <p><strong>${Object.keys(credentialsDB).length}</strong> have created accounts</p>
-                        <p><strong>${submissions.length}</strong> gift suggestions submitted</p>
-                    `;
-                }
-            }
-        }
-        
-        // Submit form
-        function submitForm() {
-            const name = document.getElementById('userName').value;
-            const password = document.getElementById('userPassword').value.trim();
-            const value = document.getElementById('userValue').value.trim();
-            
-            if (!name || !password || !value) {
-                alert('Please fill all fields!');
-                return;
-            }
-            
-            // Store credentials (name -> password)
-            credentialsDB[name] = password;
-            localStorage.setItem('credentialsDB', JSON.stringify(credentialsDB));
-            
-            // Check if this user already submitted (prevent duplicates)
-            const existingIndex = submissions.findIndex(sub => sub.user === name);
-            if (existingIndex >= 0) {
-                submissions[existingIndex] = {
-                    id: submissions[existingIndex].id,
-                    user: name,
-                    value: value,
-                    timestamp: new Date().toISOString()
-                };
-            } else {
-                // Add to submissions (store user reference but admin can't see it)
-                const submissionId = 'sub_' + Math.random().toString(36).substr(2, 9);
-                submissions.push({
-                    id: submissionId,
-                    user: name,  // Store user reference but admin won't see this
-                    value: value,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            localStorage.setItem('anonymousSubmissions', JSON.stringify(submissions));
-            
-            // Show success
-            document.getElementById('successMessage').classList.remove('hidden');
-            
-            // Clear form (keep name selected)
-            document.getElementById('userPassword').value = '';
-            document.getElementById('userValue').value = '';
-            
-            // Hide success after 3 seconds
-            setTimeout(() => {
-                document.getElementById('successMessage').classList.add('hidden');
-            }, 3000);
-            
-            // Update view
-            checkAdmin();
-            updatePhaseIndicator();
-        }
-        
-        // Admin functions
-        function checkAdmin() {
+            // Check for admin mode
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') {
-                document.getElementById('adminSection').classList.remove('hidden');
-                document.getElementById('passwordSection').classList.add('hidden');
-                document.getElementById('userForm').classList.add('hidden');
-            } else {
-                if (distributionResults && Object.keys(distributionResults).length > 0) {
-                    // Distribution phase
-                    document.getElementById('passwordSection').classList.remove('hidden');
-                    document.getElementById('userForm').classList.add('hidden');
-                } else {
-                    // Submission phase
-                    document.getElementById('userForm').classList.remove('hidden');
-                    document.getElementById('passwordSection').classList.add('hidden');
-                }
+                document.getElementById('adminPanel').classList.remove('hidden');
             }
-            
-            updatePhaseIndicator();
         }
-        
-        function showAdminData() {
-            const adminData = document.getElementById('adminData');
-            adminData.innerHTML = '<h3>All Submissions (Anonymous View):</h3>';
+
+        // View all anonymous submissions
+        function viewSubmissions() {
+            const container = document.getElementById('submissionsView');
+            const list = document.getElementById('submissionsList');
+            const warningsDiv = document.getElementById('duplicateWarnings');
             
-            if (submissions.length === 0) {
-                adminData.innerHTML += '<p>No submissions yet.</p>';
-                return;
-            }
-            
-            // Create a table showing anonymous submissions (without user info)
-            adminData.innerHTML += `
-                <table>
-                    <tr>
-                        <th>No.</th>
-                        <th>Gift Suggestion</th>
-                        <th>Time Submitted</th>
-                    </tr>
-                    ${submissions.map((sub, index) => `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${sub.value}</td>
-                            <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
-                        </tr>
-                    `).join('')}
-                </table>
-                <p class="anonymous">Note: Submissions are anonymous - admin cannot see who submitted what</p>
-            `;
-        }
-        
-        // Randomly distribute values to names
-        function distributeValues() {
-            if (submissions.length === 0) {
-                alert('No submissions to distribute!');
-                return;
-            }
-            
-            // Get list of users who have both:
-            // 1. Created an account (name + password)
-            // 2. Submitted a gift suggestion
-            const eligibleUsers = [];
-            nameList.forEach(name => {
-                // Check if user has an account
-                const hasAccount = credentialsDB.hasOwnProperty(name);
-                // Check if user has submitted a gift
-                const hasSubmitted = submissions.some(sub => sub.user === name);
-                
-                if (hasAccount && hasSubmitted) {
-                    eligibleUsers.push(name);
-                }
+            // Check for duplicate gift ideas
+            const giftCounts = {};
+            submissions.forEach(sub => {
+                giftCounts[sub.giftIdea] = (giftCounts[sub.giftIdea] || 0) + 1;
             });
             
-            if (eligibleUsers.length === 0) {
-                alert('No eligible participants found! Participants must:\n1. Create an account\n2. Submit a gift suggestion');
+            // Show warnings for duplicates
+            warningsDiv.innerHTML = '';
+            const duplicates = Object.entries(giftCounts).filter(([_, count]) => count > 1);
+            if (duplicates.length > 0) {
+                warningsDiv.innerHTML = '<h4>⚠️ Duplicate Gift Warnings:</h4>';
+                duplicates.forEach(([gift, count]) => {
+                    warningsDiv.innerHTML += `
+                        <div class="duplicate-warning">
+                            <strong>"${gift}"</strong> appears ${count} times.
+                            ${count > 2 ? '⚠️ More than 2 duplicates!' : ''}
+                        </div>
+                    `;
+                });
+                warningsDiv.innerHTML += `
+                    <p><em>Tip: Check submission times below to identify potential matches.</em></p>
+                `;
+            }
+            
+            if (submissions.length === 0) {
+                list.innerHTML = '<p>No submissions yet</p>';
+            } else {
+                // Sort submissions by timestamp (newest first)
+                const sortedSubmissions = [...submissions].sort((a, b) => {
+                    const timeA = submissionTimestamps[a.name] || 0;
+                    const timeB = submissionTimestamps[b.name] || 0;
+                    return timeB - timeA;
+                });
+                
+                list.innerHTML = sortedSubmissions.map((sub, index) => {
+                    const timestamp = submissionTimestamps[sub.name] ? 
+                        new Date(submissionTimestamps[sub.name]).toLocaleString() : 
+                        'Time unknown';
+                    return `
+                        <div class="submission-item">
+                            <strong>Submission ${index + 1}:</strong> ${sub.giftIdea}
+                            <div class="timestamp">Submitted: ${timestamp}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            container.classList.toggle('hidden');
+        }
+
+        // Toggle reset options visibility
+        function toggleResetOptions() {
+            const options = document.getElementById('resetOptions');
+            options.classList.toggle('hidden');
+        }
+
+        // Populate name dropdowns
+        function populateDropdowns() {
+            const nameSelects = ['userName', 'viewerName', 'userToDelete'];
+            
+            nameSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                // Clear existing options except the first one
+                while (select.options.length > 1) select.remove(1);
+                
+                // Add participant names
+                participants.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Check which mode we're in (submission or viewing)
+        function checkMode() {
+            if (assignments) {
+                // Distribution has happened - show assignment viewer
+                document.getElementById('submitForm').classList.add('hidden');
+                document.getElementById('viewAssignment').classList.remove('hidden');
+                showMessage("Distribution complete! Check your assignment below.", 'info');
+            } else {
+                // Still in submission phase
+                document.getElementById('submitForm').classList.remove('hidden');
+                document.getElementById('viewAssignment').classList.add('hidden');
+                showMessage("Enter your gift idea/keyword. You can update it anytime.", 'info');
+            }
+        }
+
+        // Save user's entry
+        function saveEntry() {
+            const name = document.getElementById('userName').value;
+            const password = document.getElementById('userPassword').value;
+            const giftIdea = document.getElementById('giftIdea').value;
+            
+            if (!name || !password || !giftIdea) {
+                showMessage("Please fill in all fields!", 'error');
                 return;
             }
             
-            if (eligibleUsers.length === 1) {
-                alert('Need at least 2 eligible participants to distribute gifts!');
-                return;
+            // Save password
+            passwords[name] = password;
+            localStorage.setItem('santaPasswords', JSON.stringify(passwords));
+            
+            // Save/update submission
+            const existingIndex = submissions.findIndex(sub => sub.name === name);
+            if (existingIndex >= 0) {
+                submissions[existingIndex] = { name, giftIdea };
+            } else {
+                submissions.push({ name, giftIdea });
             }
+            localStorage.setItem('santaSubmissions', JSON.stringify(submissions));
             
-            // Shuffle the eligible users
-            const shuffledUsers = [...eligibleUsers].sort(() => 0.5 - Math.random());
+            // Record timestamp
+            submissionTimestamps[name] = Date.now();
+            localStorage.setItem('santaTimestamps', JSON.stringify(submissionTimestamps));
             
-            // Create distribution (each user gets another user's gift)
-            distributionResults = {};
+            // Clear form
+            document.getElementById('userPassword').value = '';
+            document.getElementById('giftIdea').value = '';
             
-            // Create a circular assignment
-            for (let i = 0; i < shuffledUsers.length; i++) {
-                const giver = shuffledUsers[i];
-                const receiver = shuffledUsers[(i + 1) % shuffledUsers.length];
-                
-                // Find the receiver's gift submission
-                const receiverSubmission = submissions.find(sub => sub.user === receiver);
-                if (receiverSubmission) {
-                    distributionResults[giver] = receiverSubmission.value;
-                }
-            }
-            
-            // Save distribution results
-            localStorage.setItem('distributionResults', JSON.stringify(distributionResults));
-            
-            // Update views
-            checkAdmin();
-            updatePhaseIndicator();
-            
-            // Show success message to admin
-            const adminData = document.getElementById('adminData');
-            adminData.innerHTML = `
-                <div style="background: #d4edda; padding: 15px; border-radius: 4px; color: #155724; margin-top: 20px;">
-                    <h3>🎅 Distribution Successful!</h3>
-                    <p>Gifts have been distributed to <strong>${eligibleUsers.length}</strong> eligible participants.</p>
-                    <p>Participants can now view their assigned gifts by entering their name and password.</p>
-                </div>
-            `;
+            showMessage("Your gift idea has been saved!", 'success');
+            updateStats();
         }
-        
-        // Reset distribution and go back to submission phase
-        function resetDistribution() {
-            if (confirm('Are you sure you want to reset the distribution?\n\nThis will:' + 
-                       '\n- Clear all gift assignments' + 
-                       '\n- Allow participants to submit new gift suggestions' +
-                       '\n\nExisting accounts and submissions will remain.')) {
-                // Clear distribution results
-                distributionResults = null;
-                localStorage.removeItem('distributionResults');
-                
-                // Update views
-                checkAdmin();
-                updatePhaseIndicator();
-                
-                // Clear the admin data display
-                document.getElementById('adminData').innerHTML = '';
-            }
-        }
-        
-        // View assignment with name + password
-        function viewAssignment() {
+
+        // Check assignment
+        function checkAssignment() {
             const name = document.getElementById('viewerName').value;
-            const password = document.getElementById('viewerPassword').value.trim();
+            const password = document.getElementById('viewerPassword').value;
             
             if (!name || !password) {
-                alert('Please enter both name and password!');
+                showMessage("Please enter both name and password!", 'error', 'assignmentResult');
                 return;
             }
             
-            const resultDiv = document.getElementById('assignmentResult');
-            
-            // Verify credentials
-            if (credentialsDB[name] !== password) {
-                resultDiv.innerHTML = `
-                    <div style="background: #f8d7da; padding: 15px; border-radius: 4px; color: #721c24;">
-                        Invalid name/password combination. Please try again.
-                    </div>
-                `;
+            // Verify password
+            if (passwords[name] !== password) {
+                showMessage("Incorrect password!", 'error', 'assignmentResult');
                 return;
             }
             
-            // Check if assignment exists
-            if (distributionResults && distributionResults[name]) {
-                resultDiv.innerHTML = `
-                    <div style="background: #e8f4fc; padding: 15px; border-radius: 4px;">
-                        <h3>Hi ${name}! 🎅</h3>
-                        <p>你要買個份禮物嘅keyword係 <strong>${distributionResults[name]}</strong></p>
-                        <p style="font-style: italic;">🎄 Merry Christmas! 🎁</p>
-                    </div>
-                `;
+            // Check for assignment
+            if (assignments && assignments[name]) {
+                showMessage(`<h3>Hi ${name}!</h3><p>Your gift keyword is: <strong>${assignments[name]}</strong></p>`, 'success', 'assignmentResult');
             } else {
-                resultDiv.innerHTML = `
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 4px; color: #856404;">
-                        No assignment found for ${name}. Please contact the organizer.
-                    </div>
-                `;
+                showMessage("No assignment found for you. Contact the organizer.", 'error', 'assignmentResult');
             }
         }
-        
-        // Initialize on load
-        window.onload = function() {
-            initNameLists();
+
+        // Run initial gift distribution
+        function runDistribution() {
+            if (submissions.length < 2) {
+                showMessage("Need at least 2 participants to distribute gifts!", 'error', 'adminResults');
+                return;
+            }
             
-            // Load existing data
-            const loadedSubmissions = JSON.parse(localStorage.getItem('anonymousSubmissions'));
-            if (loadedSubmissions) submissions = loadedSubmissions;
+            distributeGifts();
+            showMessage(`Success! Gifts distributed to ${submissions.length} participants.`, 'success', 'adminResults');
+            checkMode();
+            updateStats();
+        }
+
+        // Core distribution logic (reused for redistribution)
+        function distributeGifts() {
+            // Create a shuffled copy of submissions
+            const shuffled = [...submissions].sort(() => Math.random() - 0.5);
             
-            const loadedCredentials = JSON.parse(localStorage.getItem('credentialsDB'));
-            if (loadedCredentials) credentialsDB = loadedCredentials;
+            // Create assignments (each person gets the next person's gift)
+            assignments = {};
+            for (let i = 0; i < shuffled.length; i++) {
+                const giver = shuffled[i].name;
+                const receiver = shuffled[(i + 1) % shuffled.length].name;
+                assignments[giver] = submissions.find(sub => sub.name === receiver).giftIdea;
+            }
             
-            const loadedDistribution = JSON.parse(localStorage.getItem('distributionResults'));
-            if (loadedDistribution) distributionResults = loadedDistribution;
+            localStorage.setItem('santaAssignments', JSON.stringify(assignments));
+        }
+
+        // Add new participant
+        function addParticipant() {
+            const nameInput = document.getElementById('newUserName');
+            const name = nameInput.value.trim();
             
-            checkAdmin();
-            updatePhaseIndicator();
-        };
+            if (!name) {
+                showMessage("Please enter a name!", 'error', 'adminResults');
+                return;
+            }
+            
+            if (participants.includes(name)) {
+                showMessage("This name already exists!", 'error', 'adminResults');
+                return;
+            }
+            
+            participants.push(name);
+            localStorage.setItem('santaParticipants', JSON.stringify(participants));
+            nameInput.value = '';
+            populateDropdowns();
+            updateStats();
+            showMessage(`Added new participant: ${name}`, 'success', 'adminResults');
+        }
+
+        // Remove participant
+        function removeParticipant() {
+            const name = document.getElementById('userToDelete').value;
+            
+            if (!name) {
+                showMessage("Please select a participant to remove!", 'error', 'adminResults');
+                return;
+            }
+            
+            if (confirm(`Remove ${name} from the Secret Santa?\n\nThis will:\n- Remove their name from the list\n- Delete their password\n- Delete any gift submission`)) {
+                // Remove from participants
+                participants = participants.filter(p => p !== name);
+                localStorage.setItem('santaParticipants', JSON.stringify(participants));
+                
+                // Remove password if exists
+                if (passwords[name]) {
+                    delete passwords[name];
+                    localStorage.setItem('santaPasswords', JSON.stringify(passwords));
+                }
+                
+                // Remove submission if exists
+                const submissionIndex = submissions.findIndex(sub => sub.name === name);
+                if (submissionIndex >= 0) {
+                    submissions.splice(submissionIndex, 1);
+                    localStorage.setItem('santaSubmissions', JSON.stringify(submissions));
+                }
+                
+                // Remove timestamp if exists
+                if (submissionTimestamps[name]) {
+                    delete submissionTimestamps[name];
+                    localStorage.setItem('santaTimestamps', JSON.stringify(submissionTimestamps));
+                }
+                
+                // Remove from assignments if exists
+                if (assignments && assignments[name]) {
+                    delete assignments[name];
+                    localStorage.setItem('santaAssignments', JSON.stringify(assignments));
+                }
+                
+                populateDropdowns();
+                updateStats();
+                showMessage(`Removed participant: ${name}`, 'success', 'adminResults');
+            }
+        }
+
+        // 1. Back to submission step
+        function softReset() {
+            if (confirm("Reopen submissions?\n\nThis will:\n- Clear current assignments\n- Let participants edit their gifts\n- Keep all passwords and existing gifts")) {
+                assignments = null;
+                localStorage.removeItem('santaAssignments');
+                showMessage("Submissions reopened! Participants can now edit gifts.", 'success', 'adminResults');
+                checkMode();
+                updateStats();
+                toggleResetOptions();
+            }
+        }
+
+        // 2. Reset distribution (reassign gifts)
+        function mediumReset() {
+            if (confirm("Redistribute gifts?\n\nThis will:\n- Create new random assignments\n- Keep all existing passwords and gifts\n- Just reshuffle who gets which gift")) {
+                distributeGifts();
+                showMessage("Gifts have been randomly reassigned!", 'success', 'adminResults');
+                checkMode();
+                updateStats();
+                toggleResetOptions();
+            }
+        }
+
+        // 3. Confirm nuclear reset
+        function confirmHardReset() {
+            if (confirm("⚠️ NUCLEAR OPTION ⚠️\n\nThis will PERMANENTLY:\n- Delete ALL passwords\n- Delete ALL gift ideas\n- Delete ALL assignments\n\nCannot be undone!")) {
+                hardReset();
+            }
+        }
+
+        // 3. Delete all records
+        function hardReset() {
+            assignments = null;
+            submissions = [];
+            passwords = {};
+            submissionTimestamps = {};
+            localStorage.removeItem('santaAssignments');
+            localStorage.removeItem('santaSubmissions');
+            localStorage.removeItem('santaPasswords');
+            localStorage.removeItem('santaTimestamps');
+            showMessage("ALL DATA HAS BEEN WIPED. Starting fresh.", 'error', 'adminResults');
+            checkMode();
+            updateStats();
+            toggleResetOptions();
+        }
+
+        // Update admin statistics
+        function updateStats() {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = `
+                <p>Participants: ${participants.length}</p>
+                <p>Registered: ${Object.keys(passwords).length}</p>
+                <p>Submissions: ${submissions.length}</p>
+                ${assignments ? `<p>Assignments made: ${Object.keys(assignments).length}</p>` : ''}
+            `;
+        }
+
+        // Show a message
+        function showMessage(text, type, elementId = 'statusMessage') {
+            const div = document.getElementById(elementId);
+            div.innerHTML = text;
+            div.className = `message ${type}`;
+            div.classList.remove('hidden');
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => div.classList.add('hidden'), 3000);
+            }
+        }
+
+        // Initialize when page loads
+        window.onload = init;
     </script>
 </body>
 </html>
