@@ -235,7 +235,6 @@
             <div id="adminResults" class="message hidden"></div>
         </div>
     </div>
-
     <script>
         // Data storage
         let participants = JSON.parse(localStorage.getItem('santaParticipants')) || ['Connie', 'Sharon', 'Wilson', 'Miu', 'ChuSum', 'LCH', 'Adrian', 'KA', 'Chick', 'Nataile', 'TMH', '會長', 'Ken', 'Pete'];
@@ -243,7 +242,7 @@
         let passwords = JSON.parse(localStorage.getItem('santaPasswords')) || {};
         let assignments = JSON.parse(localStorage.getItem('santaAssignments')) || null;
         let submissionTimestamps = JSON.parse(localStorage.getItem('santaTimestamps')) || {};
-
+    
         // Initialize the app
         function init() {
             populateDropdowns();
@@ -256,36 +255,11 @@
                 document.getElementById('adminPanel').classList.remove('hidden');
             }
         }
-
+    
         // View all anonymous submissions
         function viewSubmissions() {
             const container = document.getElementById('submissionsView');
             const list = document.getElementById('submissionsList');
-            const warningsDiv = document.getElementById('duplicateWarnings');
-            
-            // Check for duplicate gift ideas
-            const giftCounts = {};
-            submissions.forEach(sub => {
-                giftCounts[sub.giftIdea] = (giftCounts[sub.giftIdea] || 0) + 1;
-            });
-            
-            // Show warnings for duplicates
-            warningsDiv.innerHTML = '';
-            const duplicates = Object.entries(giftCounts).filter(([_, count]) => count > 1);
-            if (duplicates.length > 0) {
-                warningsDiv.innerHTML = '<h4>⚠️ Duplicate Gift Warnings:</h4>';
-                duplicates.forEach(([gift, count]) => {
-                    warningsDiv.innerHTML += `
-                        <div class="duplicate-warning">
-                            <strong>"${gift}"</strong> appears ${count} times.
-                            ${count > 2 ? '⚠️ More than 2 duplicates!' : ''}
-                        </div>
-                    `;
-                });
-                warningsDiv.innerHTML += `
-                    <p><em>Tip: Check submission times below to identify potential matches.</em></p>
-                `;
-            }
             
             if (submissions.length === 0) {
                 list.innerHTML = '<p>No submissions yet</p>';
@@ -298,8 +272,8 @@
                 });
                 
                 list.innerHTML = sortedSubmissions.map((sub, index) => {
-                    const timestamp = submissionTimestamps[sub.name] ? 
-                        new Date(submissionTimestamps[sub.name]).toLocaleString() : 
+                    const timestamp = submissionTimestamps[sub.name] ?
+                        new Date(submissionTimestamps[sub.name]).toLocaleString() :
                         'Time unknown';
                     return `
                         <div class="submission-item">
@@ -312,13 +286,13 @@
             
             container.classList.toggle('hidden');
         }
-
+    
         // Toggle reset options visibility
         function toggleResetOptions() {
             const options = document.getElementById('resetOptions');
             options.classList.toggle('hidden');
         }
-
+    
         // Populate name dropdowns
         function populateDropdowns() {
             const nameSelects = ['userName', 'viewerName', 'userToDelete'];
@@ -337,7 +311,7 @@
                 });
             });
         }
-
+    
         // Check which mode we're in (submission or viewing)
         function checkMode() {
             if (assignments) {
@@ -352,16 +326,26 @@
                 showMessage("Enter your gift idea/keyword. You can update it anytime.", 'info');
             }
         }
-
+    
         // Save user's entry
         function saveEntry() {
             const name = document.getElementById('userName').value;
             const password = document.getElementById('userPassword').value;
-            const giftIdea = document.getElementById('giftIdea').value;
+            let giftIdea = document.getElementById('giftIdea').value;
             
             if (!name || !password || !giftIdea) {
                 showMessage("Please fill in all fields!", 'error');
                 return;
+            }
+            
+            // Check for duplicate gift ideas and append timestamp if needed
+            const existingSubmissions = submissions.filter(sub =>
+                sub.name !== name && sub.giftIdea === giftIdea
+            );
+            
+            if (existingSubmissions.length > 0) {
+                const timestamp = new Date().toLocaleTimeString();
+                giftIdea = `${giftIdea} (${timestamp})`;
             }
             
             // Save password
@@ -388,7 +372,7 @@
             showMessage("Your gift idea has been saved!", 'success');
             updateStats();
         }
-
+    
         // Check assignment
         function checkAssignment() {
             const name = document.getElementById('viewerName').value;
@@ -412,7 +396,7 @@
                 showMessage("No assignment found for you. Contact the organizer.", 'error', 'assignmentResult');
             }
         }
-
+    
         // Run initial gift distribution
         function runDistribution() {
             if (submissions.length < 2) {
@@ -425,7 +409,7 @@
             checkMode();
             updateStats();
         }
-
+    
         // Core distribution logic (reused for redistribution)
         function distributeGifts() {
             // Create a shuffled copy of submissions
@@ -441,7 +425,7 @@
             
             localStorage.setItem('santaAssignments', JSON.stringify(assignments));
         }
-
+    
         // Add new participant
         function addParticipant() {
             const nameInput = document.getElementById('newUserName');
@@ -464,7 +448,7 @@
             updateStats();
             showMessage(`Added new participant: ${name}`, 'success', 'adminResults');
         }
-
+    
         // Remove participant
         function removeParticipant() {
             const name = document.getElementById('userToDelete').value;
@@ -509,7 +493,7 @@
                 showMessage(`Removed participant: ${name}`, 'success', 'adminResults');
             }
         }
-
+    
         // 1. Back to submission step
         function softReset() {
             if (confirm("Reopen submissions?\n\nThis will:\n- Clear current assignments\n- Let participants edit their gifts\n- Keep all passwords and existing gifts")) {
@@ -521,7 +505,7 @@
                 toggleResetOptions();
             }
         }
-
+    
         // 2. Reset distribution (reassign gifts)
         function mediumReset() {
             if (confirm("Redistribute gifts?\n\nThis will:\n- Create new random assignments\n- Keep all existing passwords and gifts\n- Just reshuffle who gets which gift")) {
@@ -532,14 +516,14 @@
                 toggleResetOptions();
             }
         }
-
+    
         // 3. Confirm nuclear reset
         function confirmHardReset() {
             if (confirm("⚠️ NUCLEAR OPTION ⚠️\n\nThis will PERMANENTLY:\n- Delete ALL passwords\n- Delete ALL gift ideas\n- Delete ALL assignments\n\nCannot be undone!")) {
                 hardReset();
             }
         }
-
+    
         // 3. Delete all records
         function hardReset() {
             assignments = null;
@@ -555,7 +539,7 @@
             updateStats();
             toggleResetOptions();
         }
-
+    
         // Update admin statistics
         function updateStats() {
             const statsDiv = document.getElementById('stats');
@@ -566,7 +550,7 @@
                 ${assignments ? `<p>Assignments made: ${Object.keys(assignments).length}</p>` : ''}
             `;
         }
-
+    
         // Show a message
         function showMessage(text, type, elementId = 'statusMessage') {
             const div = document.getElementById(elementId);
@@ -579,9 +563,10 @@
                 setTimeout(() => div.classList.add('hidden'), 3000);
             }
         }
-
+    
         // Initialize when page loads
         window.onload = init;
     </script>
 </body>
 </html>
+
